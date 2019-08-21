@@ -29,8 +29,8 @@ class UsersController extends Controller
         $this->tokens = $tokens;
     }
 
-    public function login(ServerRequestInterface $request)
-    {   # require username and password in $request
+    public function login(ServerRequestInterface $request){   
+        # require username and password in $request
         $controller = new AccessTokenController($this->server, $this->tokens, $this->jwt);
 
         $request = $request->withParsedBody($request->getParsedBody() +
@@ -45,8 +45,7 @@ class UsersController extends Controller
             ->issueToken($request);
     }
 
-    public function register(Request $request)
-    {   
+    public function register(Request $request){   
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -58,5 +57,18 @@ class UsersController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+    }
+
+    public function logoutAll(Request $request){   
+        Auth::user()->tokens->each(function ($token, $key) {
+            $token->delete();
+        });
+        return response()->json('Logged out successfully', 200);
+    }
+
+    public function logoutCurrent(Request $request){
+        //return $request->bearerToken();
+        Auth::user()->token()->revoke();
+        return response()->json('Logged out successfully from this device', 200);
     }
 }
